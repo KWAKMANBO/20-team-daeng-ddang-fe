@@ -37,6 +37,20 @@ export const footprintsApi = {
 
     // 날짜별 기록 목록 조회
     getDailyRecords: async (date: string): Promise<DailyRecordItem[]> => {
+        // === 성능 테스트용 MOCK DATA ===
+        const isMockMode = process.env.NEXT_PUBLIC_MOCK === 'true';
+
+        if (isMockMode && date === '2026-04-01') {
+            return Array.from({ length: 200 }).map((_, i) => ({
+                id: 1000 + i,
+                type: i % 2 === 0 ? 'WALK' : 'HEALTH',
+                title: i % 2 === 0 ? `산책 기록 ${i + 1}` : `건강 기록 ${i + 1}`,
+                createdAt: new Date(Date.now() - i * 60000).toISOString(),
+                imageUrl: undefined
+            }));
+        }
+        // ===================================
+
         const response = await http.get<ApiResponse<DailyRecordsResponse>>(`/footprints/dates/${date}`);
         const data = response.data.data;
 
