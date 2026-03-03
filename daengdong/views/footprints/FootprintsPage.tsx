@@ -94,6 +94,7 @@ export const FootprintsPage = () => {
                     <RecordListSection
                         selectedDate={selectedDate}
                         onRecordClick={handleRecordClick}
+                        scrollContainerRef={contentRef}
                     />
                 </Content>
 
