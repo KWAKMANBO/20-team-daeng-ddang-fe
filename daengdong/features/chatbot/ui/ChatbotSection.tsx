@@ -83,7 +83,7 @@ export const ChatbotSection = () => {
                         onChange={(e) => { if (e.target.value.length <= 200) setInputText(e.target.value); }}
                         onFocus={() => setIsInputFocused(true)}
                         onBlur={() => setIsInputFocused(false)}
-                        onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSendMessage(); } }}
+                        onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey && !e.nativeEvent.isComposing) { e.preventDefault(); handleSendMessage(); } }}
                         placeholder={sessionError ? "세션 오류로 사용 불가" : conversationId ? "메시지를 입력하세요" : "세션 연결 중..."}
                         rows={1}
                         disabled={!conversationId || sessionError}
