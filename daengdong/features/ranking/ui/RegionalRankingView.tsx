@@ -25,7 +25,8 @@ export const RegionalRankingView = () => {
         userRegionId,
         isRegionRegistered,
         isUserLoading,
-        userRankInfo
+        userRankInfo,
+        isFetchingNextPage
     } = useRegionalRanking();
 
     const router = useRouter();
@@ -73,6 +74,8 @@ export const RegionalRankingView = () => {
                     onToggleRegion={toggleRegion}
                     onLoadMore={fetchNextRegionPage}
                     hasMore={!!hasNextRegionPage}
+                    isFetchingNextPage={isFetchingNextPage}
+                    scrollContainerRef={scrollContentRef}
                     periodType={period}
                     periodValue={periodValue}
                     userRegionId={userRegionId}

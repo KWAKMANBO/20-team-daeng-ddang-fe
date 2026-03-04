@@ -52,7 +52,8 @@ export const usePersonalRanking = () => {
     const {
         data: listData,
         fetchNextPage,
-        hasNextPage
+        hasNextPage,
+        isFetchingNextPage
     } = useRankingListInfiniteQuery({
         periodType: period,
         periodValue,
@@ -85,6 +86,7 @@ export const usePersonalRanking = () => {
         setSelectedRegion,
 
         fetchNextPage,
+        isFetchingNextPage,
 
         hasNextPage,
         rankingList,
