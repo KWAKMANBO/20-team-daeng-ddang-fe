@@ -69,12 +69,36 @@ export const footprintsApi = {
 
     // 산책일지 상세 조회
     getWalkDetail: async (walkId: number): Promise<WalkDetail> => {
+        const isMockMode = process.env.NEXT_PUBLIC_MOCK === 'true';
+        if (isMockMode && walkId >= 1000) {
+            return {
+                walkDiaryId: walkId,
+                createdAt: new Date().toISOString(),
+                distance: 2.5,
+                duration: 1500, // 25 minutes
+                mapImageUrl: null,
+                memo: '테스트용 가짜 산책 기록입니다.',
+                region: '서울특별시 강남구'
+            };
+        }
+
         const response = await http.get<ApiResponse<WalkDetail>>(`/footprints/diaries/${walkId}`);
         return response.data.data;
     },
 
     // 산책일지 표정 분석 조회
     getWalkExpression: async (walkId: number): Promise<WalkExpressionAnalysis | null> => {
+        const isMockMode = process.env.NEXT_PUBLIC_MOCK === 'true';
+        if (isMockMode && walkId >= 1000) {
+            return {
+                analysisId: `mock-exp-${walkId}`,
+                videoUrl: '',
+                emotionProbabilities: { angry: 0.1, happy: 0.8, relaxed: 0.1, sad: 0 },
+                predictedEmotion: 'happy',
+                summary: '강아지가 매우 행복해 보입니다.'
+            };
+        }
+
         try {
             interface RawExpressionResponse {
                 analysis_id: string;
@@ -111,6 +135,23 @@ export const footprintsApi = {
 
     // 헬스케어 상세 조회
     getHealthcareDetail: async (healthcareId: number): Promise<HealthcareDetail> => {
+        const isMockMode = process.env.NEXT_PUBLIC_MOCK === 'true';
+        if (isMockMode && healthcareId >= 1000) {
+            return {
+                healthcareId: healthcareId,
+                analyzedAt: new Date().toISOString(),
+                overallRiskLevel: 'low',
+                summary: '전반적으로 건강한 관절 상태입니다.',
+                metrics: {
+                    patellaRiskSignal: { score: 90, level: '정상', description: '슬개골 탈구 위험 낮음' },
+                    gaitBalance: { score: 85, level: '양호', description: '좌우 보행 밸런스 우수' },
+                    kneeMobility: { score: 95, level: '매우좋음', description: '무릎 관절 가동성 좋음' },
+                    gaitStability: { score: 88, level: '정상', description: '보행 안정성 뛰어남' },
+                    gaitRhythm: { score: 92, level: '매우좋음', description: '일정한 보행 리듬' }
+                }
+            };
+        }
+
         const response = await http.get<ApiResponse<HealthcareDetail>>(`/healthcares/${healthcareId}`);
         return response.data.data;
     }
