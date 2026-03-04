@@ -56,6 +56,7 @@ export const CalendarSection = ({ year, month, selectedDate, onDateSelect, onMon
             formattedDate = format(day, "yyyy-MM-dd");
             const isSelected = isSameDay(day, new Date(selectedDate));
             const isCurrentMonth = isSameMonth(day, monthStartDate);
+            const isToday = isSameDay(day, new Date());
             const meta = getMetaForDate(formattedDate);
             const cloneDay = day;
 
@@ -76,6 +77,7 @@ export const CalendarSection = ({ year, month, selectedDate, onDateSelect, onMon
                             {format(day, "d")}
                         </DayNumber>
                     </DayContent>
+                    {isToday && <TodayText>오늘</TodayText>}
                 </DayCell>
             );
             day = addDays(day, 1);
@@ -190,6 +192,15 @@ const DayCell = styled.div`
     align-items: center;
     justify-content: center;
     cursor: pointer;
+    position: relative;
+`;
+
+const TodayText = styled.span`
+    position: absolute;
+    bottom: 0px;
+    font-size: 10px;
+    font-weight: 700;
+    color: ${colors.primary[500]};
 `;
 
 const DayContent = styled.div<{ isSelected: boolean; isCurrentMonth: boolean; walkLevel: number }>`
