@@ -15,6 +15,7 @@ import { radius } from "@/shared/styles/tokens";
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import { useModalStore } from '@/shared/stores/useModalStore';
 import { useAuthStore } from '@/entities/session/model/store';
+import { useScrollRestoration } from '@/shared/hooks/useScrollRestoration';
 
 export const FootprintsPage = () => {
     const router = useRouter();
@@ -64,38 +65,11 @@ export const FootprintsPage = () => {
         }
     }, [openModal, router, isLoggedIn]);
 
-    // 스크롤 위치 저장 및 복원
-    const [showScrollTop, setShowScrollTop] = useState(false);
-    useEffect(() => {
-        const contentEl = contentRef.current;
-        if (!contentEl) return;
-
-        const savedScroll = sessionStorage.getItem('footprints-scroll');
-        if (savedScroll) {
-            requestAnimationFrame(() => {
-                requestAnimationFrame(() => {
-                    if (contentRef.current) {
-                        contentRef.current.scrollTop = Number(savedScroll);
-                    }
-                });
-            });
-        }
-
-        const handleScroll = () => {
-            setShowScrollTop(contentEl.scrollTop > 300);
-            sessionStorage.setItem('footprints-scroll', contentEl.scrollTop.toString());
-        };
-
-        contentEl.addEventListener('scroll', handleScroll);
-        return () => contentEl.removeEventListener('scroll', handleScroll);
-    }, []);
-
-    const scrollToTop = () => {
-        contentRef.current?.scrollTo({
-            top: 0,
-            behavior: 'smooth'
-        });
-    };
+    const { showScrollTop, scrollToTop } = useScrollRestoration({
+        ref: contentRef,
+        storageKey: 'footprints-scroll',
+        threshold: 300
+    });
 
     const handleDateSelect = (date: string) => {
         const params = new URLSearchParams(searchParams.toString());
