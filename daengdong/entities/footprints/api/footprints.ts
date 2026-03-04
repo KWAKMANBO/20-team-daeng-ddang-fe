@@ -45,7 +45,7 @@ export const footprintsApi = {
                 id: 1000 + i,
                 type: i % 2 === 0 ? 'WALK' : 'HEALTH',
                 title: i % 2 === 0 ? `산책 기록 ${i + 1}` : `건강 기록 ${i + 1}`,
-                createdAt: new Date(Date.now() - i * 60000).toISOString(),
+                createdAt: new Date(new Date('2026-04-01T12:00:00').getTime() - i * 60000).toISOString(),
                 imageUrl: undefined
             }));
         }
