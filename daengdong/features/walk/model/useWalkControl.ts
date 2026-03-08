@@ -17,6 +17,7 @@ import { resolveS3Url } from '@/shared/utils/resolveS3Url';
 import { missionApi } from "@/entities/mission/api/mission";
 import { useMissionStore } from "@/entities/mission/model/missionStore";
 import { useAuthStore } from "@/entities/session/model/store";
+import { connectWalkAnalysisSSE } from "@/shared/lib/sse/analysisSSE";
 
 export const useWalkControl = () => {
     const {
@@ -476,15 +477,33 @@ export const useWalkControl = () => {
                             });
                             hideLoading();
 
-                            // 미션이 있는 경우 분석 Task 생성
+                            // Task 생성 및 SSE 대기
                             const { completedMissionIds } = useMissionStore.getState();
                             let missionTaskId: string | null = null;
+
                             if (completedMissionIds.length > 0) {
                                 try {
+                                    showLoading("돌발 미션 분석 중입니다...");
+
                                     const task = await missionApi.createMissionTask(walkId);
                                     missionTaskId = task.taskId;
+
+                                    await new Promise<void>((resolve, reject) => {
+                                        connectWalkAnalysisSSE(
+                                            walkId,
+                                            missionTaskId as string,
+                                            () => resolve(),
+                                            (err) => reject(err)
+                                        );
+                                    });
                                 } catch (e) {
-                                    console.error("[미션 Task] 생성 실패:", e);
+                                    console.error("[미션 Task] 분석 실패:", e);
+                                    showToast({
+                                        message: "돌발 미션 분석에 실패했어요. 나중에 다시 시도해주세요.",
+                                        type: "error",
+                                    });
+                                } finally {
+                                    hideLoading();
                                 }
                             }
 
