@@ -108,19 +108,17 @@ export const useWalkControl = () => {
                     }
                 });
 
-                // 첫 BLOCK_SYNC: 서버 데이터로 완전 교체 (초기화)
-                // 이후 BLOCK_SYNC: 병합 (Optimistic Update 보존)
+                // 서버 데이터로 초기화
                 if (isFirstSyncRef.current) {
                     setMyBlocks(mine);
                     setOthersBlocks(others);
                     isFirstSyncRef.current = false;
                 } else {
-                    // 서버에서 온 블록 + 로컬에만 있는 블록 병합
+                    // 서버 블록 + 로컬 블록 병합
                     const { myBlocks: currentMyBlocks, othersBlocks: currentOthersBlocks } = useWalkStore.getState();
                     const serverMyBlockIds = new Set(mine.map(b => b.blockId));
                     const localOnlyMyBlocks = currentMyBlocks.filter(b => !serverMyBlockIds.has(b.blockId));
 
-                    // othersBlocks도 동일하게 병합
                     const serverOthersBlockIds = new Set(others.map(b => b.blockId));
                     const localOnlyOthersBlocks = currentOthersBlocks.filter(b => !serverOthersBlockIds.has(b.blockId));
 
@@ -131,7 +129,7 @@ export const useWalkControl = () => {
             case "BLOCK_TAKEN":
                 const { blockId, previousDogId, newDogId, takenAt } = message.data;
 
-                // 1. 내가 뺏은 경우
+                // 뺏은 경우
                 if (newDogId === myDogId) {
                     occupyBlock({
                         blockId,
@@ -141,10 +139,9 @@ export const useWalkControl = () => {
 
                     showToast({ message: "다른 강아지의 블록을 점령했어요! ⚔️", type: "success" });
                 }
-                // 2. 내가 뺏긴 경우
+                // 뺏긴 경우
                 else if (previousDogId === myDogId) {
                     removeMyBlock(blockId);
-                    // 뺏어간 사람 정보로 others에 추가
                     updateOthersBlock({
                         blockId,
                         dogId: newDogId,
@@ -153,7 +150,7 @@ export const useWalkControl = () => {
 
                     showToast({ message: "내 영역을 빼앗겼어요... 🥲", type: "error" });
                 }
-                // 3. 남끼리 뺏고 뺏긴 경우
+                // 남이 뺏고 뺏긴 경우
                 else {
                     updateOthersBlock({
                         blockId,
@@ -171,10 +168,8 @@ export const useWalkControl = () => {
     useEffect(() => {
         if (walkMode !== 'walking') return;
 
-        // 마지막 위치 저장
         lastLatRef.current = currentPos?.lat || undefined;
         lastLngRef.current = currentPos?.lng || undefined;
-
 
         // 주기적 전송
         const intervalId = setInterval(() => {
@@ -200,7 +195,7 @@ export const useWalkControl = () => {
             (error) => console.error("WebSocket Error:", error)
         );
 
-        // 산책 중 새로고침/페이지 이동 후 복귀 시 자동 재연결
+        // 새로고침/페이지 이동 후 복귀 시 자동 재연결
         const { walkMode, walkId } = useWalkStore.getState();
         if (walkMode === 'walking' && walkId) {
             const token = localStorage.getItem('accessToken') || undefined;
@@ -234,7 +229,7 @@ export const useWalkControl = () => {
             return;
         }
 
-        // 반려견 정보 미등록 체크 (dog 객체가 없거나 id가 없는 경우)
+        // 반려견 정보 미등록 체크
         if (!dog?.id) {
             openModal({
                 title: "반려견 등록이 필요해요",
@@ -312,8 +307,6 @@ export const useWalkControl = () => {
         }
     };
 
-    // ... existing imports ...
-
     const handleCancel = () => {
         openModal({
             title: "산책 취소",
@@ -322,7 +315,6 @@ export const useWalkControl = () => {
             confirmText: "취소하기",
             cancelText: "계속 산책하기",
             onConfirm: () => {
-                // 비정상 속도 체크
                 const isAbnormal = isAbnormalSpeed(distance, elapsedTime);
                 if (isAbnormal) {
                     showToast({
@@ -357,7 +349,6 @@ export const useWalkControl = () => {
                         }
                     );
                 } else {
-                    // walkId가 없으면 로컬 리셋만 수행
                     wsClientRef.current?.disconnect();
                     reset();
                 }
@@ -381,7 +372,6 @@ export const useWalkControl = () => {
             confirmText: "종료하기",
             cancelText: "계속 산책하기",
             onConfirm: async () => {
-                // 비정상 속도 체크
                 const isAbnormal = isAbnormalSpeed(distance, elapsedTime);
                 const finalDistance = isAbnormal ? 0 : Number(distance.toFixed(4));
 
@@ -426,8 +416,8 @@ export const useWalkControl = () => {
                         });
                     };
 
-                    // 준비 상태 대기 (최대 10초)
-                    const isReady = await waitForSnapshotReady(10000);
+                    // 준비 상태 대기 
+                    const isReady = await waitForSnapshotReady(1000 * 10);
 
                     if (!isReady) {
                         console.warn("[Snapshot] 대기 후에도 스냅샷이 준비되지 않음");
@@ -438,7 +428,6 @@ export const useWalkControl = () => {
                         const blob = await window.getWalkSnapshotBlob();
 
                         if (blob && blob.size > 0) {
-                            // 결과 페이지에서 이미지가 즉시 보이도록 Base64로 변환하여 저장
                             const base64Url = await new Promise<string>((resolve) => {
                                 const reader = new FileReader();
                                 reader.onloadend = () => resolve(reader.result as string);
@@ -533,7 +522,6 @@ export const useWalkControl = () => {
         }
     }, []);
 
-    // Area 구독 관리 Hook
     useAreaSubscription(currentPos, wsClientRef.current);
 
     return {
