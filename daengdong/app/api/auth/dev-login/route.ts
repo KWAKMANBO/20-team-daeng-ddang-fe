@@ -25,7 +25,18 @@ export async function POST(request: NextRequest) {
 
   const accessToken = data?.data?.accessToken as string | undefined;
 
-  const response = NextResponse.json(data, {
+  const responseData =
+    data && typeof data === "object"
+      ? {
+          ...data,
+          data:
+            data.data && typeof data.data === "object"
+              ? { ...data.data, accessToken: undefined }
+              : data.data,
+        }
+      : data;
+
+  const response = NextResponse.json(responseData, {
     status: backendResponse.status,
   });
 
@@ -35,6 +46,7 @@ export async function POST(request: NextRequest) {
   }
 
   if (accessToken) {
+    const isSecureCookie = request.nextUrl.protocol === "https:";
     const sid = createBffSession({
       accessToken,
       createdAt: Date.now(),
@@ -42,7 +54,7 @@ export async function POST(request: NextRequest) {
 
     response.cookies.set("dd_sid", sid, {
       httpOnly: true,
-      secure: true,
+      secure: isSecureCookie,
       sameSite: "lax",
       path: "/",
     });

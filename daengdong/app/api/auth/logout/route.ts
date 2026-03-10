@@ -3,6 +3,7 @@ import { deleteBffSession } from "@/server/bffSessionStore";
 
 export async function POST(request: NextRequest) {
   const sid = request.cookies.get("dd_sid")?.value;
+  const isSecureCookie = request.nextUrl.protocol === "https:";
 
   if (sid) {
     deleteBffSession(sid);
@@ -12,8 +13,13 @@ export async function POST(request: NextRequest) {
 
   response.cookies.set("dd_sid", "", {
     httpOnly: true,
-    secure: true,
+    secure: isSecureCookie,
     sameSite: "lax",
+    path: "/",
+    maxAge: 0,
+  });
+
+  response.cookies.set("isLoggedIn", "", {
     path: "/",
     maxAge: 0,
   });

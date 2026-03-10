@@ -52,12 +52,10 @@ export const useWalkControl = () => {
     const lastLngRef = useRef<number | undefined>(undefined);
     const isFirstSyncRef = useRef(true);
 
-    // dog 상태가 변경될 때마다 ref 업데이트
     useEffect(() => {
         dogRef.current = dog;
     }, [dog]);
 
-    // currentPos ref 업데이트
     useEffect(() => {
         currentPosRef.current = currentPos;
     }, [currentPos]);
@@ -78,7 +76,6 @@ export const useWalkControl = () => {
 
                     showToast({ message: "새로운 영역을 획득했어요! 🚩", type: "success" });
                 } else {
-                    // 남이 점유 
                     updateOthersBlock({
                         blockId: message.data.blockId,
                         dogId: message.data.dogId,
@@ -199,8 +196,7 @@ export const useWalkControl = () => {
         // 새로고침/페이지 이동 후 복귀 시 자동 재연결
         const { walkMode, walkId } = useWalkStore.getState();
         if (walkMode === 'walking' && walkId) {
-            const token = localStorage.getItem('accessToken') || undefined;
-            wsClientRef.current.connect(walkId, token)
+            wsClientRef.current.connect(walkId)
                 .catch(err => console.error("[WebSocket] 자동 재연결 실패:", err));
         }
 
@@ -275,8 +271,7 @@ export const useWalkControl = () => {
 
             // WebSocket 연결
             try {
-                const token = localStorage.getItem('accessToken') || undefined;
-                await wsClientRef.current?.connect(res.walkId, token);
+                await wsClientRef.current?.connect(res.walkId);
             } catch (e) {
                 console.error("[산책 시작] WebSocket 연결 실패:", e);
             }

@@ -1,10 +1,13 @@
 import { EventSourcePolyfill, MessageEvent } from 'event-source-polyfill';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? '';
+const API_BASE_URL = '/api/proxy';
+const shouldLogOnLocalhost = (): boolean =>
+    typeof window !== 'undefined' && window.location.hostname === 'localhost';
 
-const getAuthHeaders = (): Record<string, string> => {
-    const token = typeof window !== 'undefined' ? localStorage.getItem('accessToken') : null;
-    return token ? { Authorization: `Bearer ${token}` } : {};
+const debugLog = (...args: unknown[]) => {
+    if (shouldLogOnLocalhost()) {
+        console.debug(...args);
+    }
 };
 
 export interface AnalysisSSEData {
@@ -30,23 +33,22 @@ export const connectWalkAnalysisSSE = (
     let settled = false;
 
     const es = new EventSourcePolyfill(url, {
-        headers: getAuthHeaders(),
         withCredentials: true,
     });
 
     es.addEventListener('connected', (event) => {
-        console.debug('[SSE Walk] connected:', (event as MessageEvent).data);
+        debugLog('[SSE Walk] connected:', (event as MessageEvent).data);
     });
 
     es.addEventListener('heartbeat', () => {
-        console.debug('[SSE Walk] heartbeat');
+        debugLog('[SSE Walk] heartbeat');
     });
 
     es.addEventListener('status', (event) => {
         if (settled) return;
         try {
             const data: AnalysisSSEData = JSON.parse((event as MessageEvent).data);
-            console.debug('[SSE Walk] status 수신:', data);
+            debugLog('[SSE Walk] status 수신:', data);
 
             if (data.status === 'SUCCESS') {
                 settled = true;
@@ -88,23 +90,22 @@ export const connectHealthcareSSE = (
     let settled = false;
 
     const es = new EventSourcePolyfill(url, {
-        headers: getAuthHeaders(),
         withCredentials: true,
     });
 
     es.addEventListener('connected', (event) => {
-        console.debug('[SSE Healthcare] connected:', (event as MessageEvent).data);
+        debugLog('[SSE Healthcare] connected:', (event as MessageEvent).data);
     });
 
     es.addEventListener('heartbeat', () => {
-        console.debug('[SSE Healthcare] heartbeat');
+        debugLog('[SSE Healthcare] heartbeat');
     });
 
     es.addEventListener('status', (event) => {
         if (settled) return;
         try {
             const data: AnalysisSSEData = JSON.parse((event as MessageEvent).data);
-            console.debug('[SSE Healthcare] status 수신:', data);
+            debugLog('[SSE Healthcare] status 수신:', data);
 
             if (data.status === 'SUCCESS') {
                 settled = true;

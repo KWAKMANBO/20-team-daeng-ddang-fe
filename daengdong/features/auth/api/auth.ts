@@ -1,7 +1,6 @@
 import { http } from "@/shared/api/http";
 
 export interface LoginResponse {
-    accessToken: string;
     isNewUser: boolean;
     user: {
         userId: number;
@@ -17,6 +16,24 @@ interface ApiResponse<T> {
 }
 
 export const kakaoLogin = async (code: string): Promise<LoginResponse> => {
+    const useBffAuth = process.env.NEXT_PUBLIC_USE_BFF_AUTH === 'true';
+
+    if (useBffAuth) {
+        const res = await fetch("/api/auth/login", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ code }),
+            credentials: "include",
+        });
+
+        if (!res.ok) {
+            throw new Error("Login failed");
+        }
+
+        const body = (await res.json()) as ApiResponse<LoginResponse>;
+        return body.data;
+    }
+
     const response = await http.post<ApiResponse<LoginResponse>>(
         `/auth/login`,
         { code },
@@ -39,7 +56,6 @@ export interface DevLoginRequest {
 }
 
 export interface DevLoginResponse {
-    accessToken: string;
     isNewUser: boolean;
     user: {
         userId: number;
@@ -55,7 +71,7 @@ const parseBooleanEnv = (value: string | undefined): boolean | null => {
 };
 
 export const devLogin = async (data: DevLoginRequest): Promise<DevLoginResponse> => {
-    const useBffAuth = parseBooleanEnv(process.env.NEXT_PUBLIC_USE_BFF_AUTH);
+    const useBffAuth = process.env.NEXT_PUBLIC_USE_BFF_AUTH === 'true';
 
     if (useBffAuth) {
         const res = await fetch("/api/auth/dev-login", {

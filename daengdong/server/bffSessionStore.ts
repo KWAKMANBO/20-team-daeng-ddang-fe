@@ -18,6 +18,11 @@ export function getBffSession(sid: string | undefined | null): BffSessionData | 
   return sessions.get(sid);
 }
 
+export function updateBffSession(sid: string | undefined | null, data: BffSessionData): void {
+  if (!sid) return;
+  sessions.set(sid, data);
+}
+
 export function deleteBffSession(sid: string | undefined | null): void {
   if (!sid) return;
   sessions.delete(sid);

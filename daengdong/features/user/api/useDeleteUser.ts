@@ -13,10 +13,11 @@ export const useDeleteUser = () => {
 
     return useMutation({
         mutationFn: deleteUser,
-        onSuccess: () => {
-            localStorage.removeItem('accessToken');
-            document.cookie = 'refreshToken=; Max-Age=0; path=/;';
-            document.cookie = 'isLoggedIn=; Max-Age=0; path=/;';
+        onSuccess: async () => {
+            await fetch('/api/auth/logout', {
+                method: 'POST',
+                credentials: 'include',
+            }).catch(() => undefined);
             resetUser();
             setLoggedIn(false);
             router.replace('/login');

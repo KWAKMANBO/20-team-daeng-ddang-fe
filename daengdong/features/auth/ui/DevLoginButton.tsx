@@ -21,8 +21,6 @@ export const DevLoginButton = () => {
     const loginMutation = useMutation({
         mutationFn: devLogin,
         onSuccess: (data) => {
-            localStorage.setItem('accessToken', data.accessToken);
-            document.cookie = 'isLoggedIn=true; path=/; max-age=31536000';
             setLoggedIn(true);
 
             // isNewUser 기반 라우팅
