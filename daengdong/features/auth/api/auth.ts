@@ -62,14 +62,6 @@ export interface DevLoginResponse {
     };
 }
 
-const parseBooleanEnv = (value: string | undefined): boolean | null => {
-    if (value == null) return null;
-    const normalized = value.trim().toLowerCase();
-    if (normalized === "true") return true;
-    if (normalized === "false") return false;
-    return null;
-};
-
 export const devLogin = async (data: DevLoginRequest): Promise<DevLoginResponse> => {
     const useBffAuth = process.env.NEXT_PUBLIC_USE_BFF_AUTH === 'true';
 
