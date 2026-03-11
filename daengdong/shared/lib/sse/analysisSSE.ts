@@ -1,6 +1,3 @@
-import { EventSourcePolyfill, MessageEvent } from 'event-source-polyfill';
-
-const API_BASE_URL = '/api/proxy';
 const shouldLogOnLocalhost = (): boolean =>
     typeof window !== 'undefined' && window.location.hostname === 'localhost';
 
@@ -29,10 +26,10 @@ export const connectWalkAnalysisSSE = (
     onDone: (data: AnalysisSSEData) => void,
     onError: (err: Error) => void
 ): (() => void) => {
-    const url = `${API_BASE_URL}/walks/${walkId}/analysis/tasks/${taskId}/events`;
+    const url = `/api/sse/walks/${walkId}/tasks/${taskId}`;
     let settled = false;
 
-    const es = new EventSourcePolyfill(url, {
+    const es = new EventSource(url, {
         withCredentials: true,
     });
 
@@ -86,10 +83,10 @@ export const connectHealthcareSSE = (
     onDone: (data: AnalysisSSEData) => void,
     onError: (err: Error) => void
 ): (() => void) => {
-    const url = `${API_BASE_URL}/healthcares/analysis/tasks/${taskId}/events`;
+    const url = `/api/sse/healthcares/tasks/${taskId}`;
     let settled = false;
 
-    const es = new EventSourcePolyfill(url, {
+    const es = new EventSource(url, {
         withCredentials: true,
     });
 
