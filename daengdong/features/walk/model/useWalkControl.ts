@@ -23,6 +23,7 @@ import { getLegacyAccessToken } from "@/shared/lib/auth/legacyToken";
 
 export const useWalkControl = () => {
     const useBffAuth = process.env.NEXT_PUBLIC_USE_BFF_AUTH === 'true';
+    const useBffRealtime = process.env.NEXT_PUBLIC_USE_BFF_SSE === 'true';
     const {
         walkMode,
         elapsedTime,
@@ -62,6 +63,36 @@ export const useWalkControl = () => {
     useEffect(() => {
         currentPosRef.current = currentPos;
     }, [currentPos]);
+
+    const resolveWalkWsAccessToken = useCallback(async (): Promise<string | undefined> => {
+        if (useBffRealtime) {
+            try {
+                const response = await fetch('/api/ws/walks/auth', {
+                    method: 'GET',
+                    credentials: 'include',
+                    cache: 'no-store',
+                });
+
+                if (!response.ok) {
+                    throw new Error(`WS auth failed: ${response.status}`);
+                }
+
+                const body = (await response.json()) as { accessToken?: string };
+                if (!body.accessToken) {
+                    throw new Error('WS auth token is missing');
+                }
+
+                return body.accessToken;
+            } catch (error) {
+                console.error('[WebSocket] BFF 토큰 발급 실패:', error);
+                if (useBffAuth) {
+                    throw error;
+                }
+            }
+        }
+
+        return useBffAuth ? undefined : getLegacyAccessToken() ?? undefined;
+    }, [useBffAuth, useBffRealtime]);
 
     const handleWebSocketMessage = useCallback((message: ServerMessage) => {
         const currentDog = dogRef.current;
@@ -199,15 +230,15 @@ export const useWalkControl = () => {
         // 새로고침/페이지 이동 후 복귀 시 자동 재연결
         const { walkMode, walkId } = useWalkStore.getState();
         if (walkMode === 'walking' && walkId) {
-            const accessToken = useBffAuth ? undefined : getLegacyAccessToken() ?? undefined;
-            wsClientRef.current.connect(walkId, accessToken)
+            resolveWalkWsAccessToken()
+                .then((accessToken) => wsClientRef.current?.connect(walkId, accessToken))
                 .catch(err => console.error("[WebSocket] 자동 재연결 실패:", err));
         }
 
         return () => {
             wsClientRef.current?.disconnect();
         };
-    }, [handleWebSocketMessage]);
+    }, [handleWebSocketMessage, resolveWalkWsAccessToken]);
 
     const handleStart = async () => {
         const isLoggedIn = useAuthStore.getState().isLoggedIn;
@@ -275,7 +306,7 @@ export const useWalkControl = () => {
 
             // WebSocket 연결
             try {
-                const accessToken = useBffAuth ? undefined : getLegacyAccessToken() ?? undefined;
+                const accessToken = await resolveWalkWsAccessToken();
                 await wsClientRef.current?.connect(res.walkId, accessToken);
             } catch (e) {
                 console.error("[산책 시작] WebSocket 연결 실패:", e);
