@@ -82,7 +82,12 @@ export const ExpressionCamera = ({
         }
       };
 
+      let hasHandledStop = false;
+
       recorder.onstop = () => {
+        if (hasHandledStop) return;
+        hasHandledStop = true;
+
         const blob = new Blob(chunksRef.current, { type: mimeType });
 
         // iOS에서 blob이 비어있는 경우 에러 처리
@@ -98,7 +103,7 @@ export const ExpressionCamera = ({
         setFlowState("ANALYZING");
         onAnalyze(blob).catch((e) => {
           console.error(e);
-          showToast({ message: "분석에 실패했습니다. 잠시 후 다시 시도해주세요.", type: "error" });
+          setPreviewURL(null);
           setFlowState("IDLE");
         });
       };
@@ -149,15 +154,16 @@ export const ExpressionCamera = ({
     setCountdown(3);
     setFlowState("COUNTDOWN");
 
+    let currentCountdown = 3;
     const countdownInterval = window.setInterval(() => {
-      setCountdown((prev) => {
-        if (prev <= 1) {
-          window.clearInterval(countdownInterval);
-          startRecording();
-          return 0;
-        }
-        return prev - 1;
-      });
+      currentCountdown -= 1;
+      if (currentCountdown <= 0) {
+        window.clearInterval(countdownInterval);
+        setCountdown(0);
+        startRecording();
+      } else {
+        setCountdown(currentCountdown);
+      }
     }, 1000);
     countdownTimerRef.current = countdownInterval;
   }, [stream, startRecording]);
@@ -190,11 +196,16 @@ export const ExpressionCamera = ({
       if (stream) {
         stream.getTracks().forEach((track) => track.stop());
       }
+    };
+  }, [stream]);
+
+  useEffect(() => {
+    return () => {
       if (previewURL) {
         URL.revokeObjectURL(previewURL);
       }
     };
-  }, [stream, previewURL]);
+  }, [previewURL]);
 
   if (error) {
     return (

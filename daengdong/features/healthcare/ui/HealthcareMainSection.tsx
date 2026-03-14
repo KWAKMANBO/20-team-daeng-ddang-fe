@@ -19,10 +19,14 @@ export const HealthcareMainSection = ({ onUpload, onRecord, onChat, onHelp }: He
         <Title>AI 보행 분석</Title>
         {onHelp && (
           <HelpButton onClick={onHelp}>
-            <Image src={HelpIcon} alt="도움말" width={20} height={20} />
+            <HelpIcon width={20} height={20} />
           </HelpButton>
         )}
       </TitleSection>
+
+      {/* <NoticeBox>
+        <NoticeText>⚠️ 헬스케어 및 챗봇은 오후 1시부터 9시까지만 이용 가능해요!</NoticeText>
+      </NoticeBox> */}
 
       <DescriptionBox>
         <DescriptionText>
@@ -98,6 +102,20 @@ const HelpButton = styled.button`
   &:active {
     background: ${colors.gray[200]};
   }
+`;
+
+const NoticeBox = styled.div`
+  padding: ${spacing[3]}px;
+  background-color: ${colors.primary[50]};
+  border-radius: ${radius.md};
+  text-align: center;
+`;
+
+const NoticeText = styled.p`
+  margin: 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: ${colors.primary[600]};
 `;
 
 const DescriptionBox = styled.div`

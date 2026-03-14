@@ -1,16 +1,19 @@
 import { useState, useRef } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useToastStore } from '@/shared/stores/useToastStore';
+import { useModalStore } from '@/shared/stores/useModalStore';
 import { useWalkStore } from '@/entities/walk/model/walkStore';
 import { useLoadingStore } from '@/shared/stores/useLoadingStore';
 import fileApi from '@/shared/api/file';
 import { expressionApi } from '@/entities/expression/api/expression';
+import { connectWalkAnalysisSSE } from '@/shared/lib/sse/analysisSSE';
 
 export const useExpressionAnalysis = () => {
     const router = useRouter();
     const searchParams = useSearchParams();
     const walkIdFromStore = useWalkStore((s) => s.walkId);
     const { showToast } = useToastStore();
+    const { openModal } = useModalStore();
     const { showLoading, hideLoading } = useLoadingStore();
 
     const [isIdle, setIsIdle] = useState(true);
@@ -53,22 +56,37 @@ export const useExpressionAnalysis = () => {
             showLoading("표정 분석 요청 중입니다...");
             const job = await expressionApi.createExpressionJob(walkId, { videoUrl });
 
-            let taskStatus = job.status;
-            while (taskStatus === "PENDING" || taskStatus === "RUNNING") {
-                await new Promise((resolve) => setTimeout(resolve, 2000));
-                const currentStatus = await expressionApi.getAnalysisTaskStatus(walkId, job.taskId);
-                taskStatus = currentStatus.status;
-
-                if (taskStatus === "FAIL") {
-                    throw new Error("ANALYSIS_FAILED");
-                }
-            }
+            showLoading("표정 분석 중입니다...");
+            await new Promise<void>((resolve, reject) => {
+                connectWalkAnalysisSSE(
+                    walkId,
+                    job.taskId,
+                    () => resolve(),
+                    (err) => reject(err)
+                );
+            });
 
             router.replace(`/walk/expression/result?walkId=${walkId}&taskId=${job.taskId}`);
+
 
         } catch (e: unknown) {
             const err = e as { response?: { data?: { errorCode?: string } } };
             const errorCode = err?.response?.data?.errorCode;
+
+            const promptRetry = (message: string) => {
+                openModal({
+                    title: "표정 분석 실패",
+                    message: message + "\n재촬영할까요?",
+                    type: "confirm",
+                    confirmText: "다시 시도",
+                    cancelText: "돌아가기",
+                    onConfirm: () => {
+                    },
+                    onCancel: () => {
+                        handleCancel();
+                    }
+                });
+            };
 
             switch (errorCode) {
                 case "UNAUTHORIZED":
@@ -84,17 +102,16 @@ export const useExpressionAnalysis = () => {
                     router.replace("/walk");
                     break;
                 case "DOG_FACE_NOT_RECOGNIZED":
-                    showToast({ message: "강아지 얼굴을 인식할 수 없습니다.", type: "error" });
-                    handleCancel();
+                    promptRetry("강아지 얼굴을 인식할 수 없습니다.");
                     break;
                 case "AI_SERVER_CONNECTION_FAILED":
-                    showToast({ message: "AI 서버에 연결할 수 없습니다.", type: "error" });
-                    handleCancel();
+                    promptRetry("AI 서버에 연결할 수 없습니다.");
                     break;
                 default:
-                    showToast({ message: "강아지 얼굴을 인식할 수 없습니다.", type: "error" });
-                    handleCancel();
+                    promptRetry("분석에 실패했어요.");
+                    break;
             }
+            throw e;
         } finally {
             isSubmittingRef.current = false;
             setIsAnalyzing(false);
