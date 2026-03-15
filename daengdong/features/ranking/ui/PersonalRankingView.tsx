@@ -13,6 +13,7 @@ import { useModalStore } from "@/shared/stores/useModalStore";
 import { useAuthStore } from "@/entities/session/model/store";
 import { ScrollToTopButton } from "./ScrollToTopButton";
 import { RankItem } from "./RankItem";
+import { TopPodium } from "./TopPodium";
 import { ApiResponse } from "@/shared/api/types";
 import { RankingList as RankingListType, RankingSummary } from "@/entities/ranking/model/types";
 import { InfiniteData } from "@tanstack/react-query";
@@ -86,8 +87,8 @@ export const PersonalRankingView = ({ initialSummaryData, initialListData }: Per
             </FixedHeader>
 
             <ScrollContent ref={scrollContentRef}>
+                {topRanks.length > 0 && <TopPodium topRanks={topRanks} />}
                 <RankingList
-                    topRanks={topRanks}
                     ranks={rankingList}
                     myRankInfo={myRankInfo}
                     onLoadMore={fetchNextPage}

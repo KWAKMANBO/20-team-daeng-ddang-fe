@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import styled from "@emotion/styled";
+import dynamic from "next/dynamic";
 import { Header } from "@/widgets/Header";
 import { RankingTabs } from "@/features/ranking/ui/RankingTabs";
 import { PersonalRankingView } from "@/features/ranking/ui/PersonalRankingView";
@@ -9,7 +10,10 @@ import { ApiResponse } from "@/shared/api/types";
 import { RankingList, RankingSummary } from "@/entities/ranking/model/types";
 import { InfiniteData } from "@tanstack/react-query";
 
-export const RankingPage = () => {
+const RegionalRankingView = dynamic(
+    () => import("@/features/ranking/ui/RegionalRankingView").then((mod) => mod.RegionalRankingView),
+    { ssr: false }
+);
 
 interface RankingPageProps {
     initialSummaryData?: ApiResponse<RankingSummary>;
