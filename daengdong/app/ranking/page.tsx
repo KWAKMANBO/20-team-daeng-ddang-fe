@@ -3,6 +3,7 @@ import { format } from "date-fns";
 import { ApiResponse } from "@/shared/api/types";
 import { RankingList, RankingSummary } from "@/entities/ranking/model/types";
 import { InfiniteData } from "@tanstack/react-query";
+import { resolveS3Url } from "@/shared/utils/resolveS3Url";
 
 export const dynamic = "force-dynamic";
 
@@ -58,9 +59,22 @@ const getInitialRankingData = async (): Promise<{
 
 export default async function Page() {
     const initialData = await getInitialRankingData();
+    const topRankImage = initialData.summary?.data.topRanks?.[0]?.profileImageUrl;
+    const resolvedTopRankImage = resolveS3Url(topRankImage);
+    const lcpPreloadHref = resolvedTopRankImage
+        ? `/next-api/image?url=${encodeURIComponent(resolvedTopRankImage)}&w=144&q=40`
+        : null;
 
     return (
         <>
+            {lcpPreloadHref && (
+                <link
+                    rel="preload"
+                    as="image"
+                    href={lcpPreloadHref}
+                    fetchPriority="high"
+                />
+            )}
             <RankingPage
                 initialSummaryData={initialData.summary}
                 initialListData={initialData.list}
