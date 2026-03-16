@@ -13,6 +13,7 @@ export const DevLoginButton = () => {
     const isE2EEnabled = process.env.NEXT_PUBLIC_ENABLE_DEV_LOGIN === 'true';
     const hostname = typeof window === 'undefined' ? '' : window.location.hostname;
     const isLocalhost = hostname === 'localhost' || hostname === '127.0.0.1' || hostname === '::1';
+    const canInteract = typeof window !== 'undefined';
 
     const loginMutation = useMutation({
         mutationFn: devLogin,
@@ -64,14 +65,14 @@ export const DevLoginButton = () => {
             <ButtonGroup>
                 <DevButton
                     onClick={handleNewUserLogin}
-                    disabled={loginMutation.isPending}
+                    disabled={loginMutation.isPending || !canInteract}
                     variant="new"
                 >
                     {loginMutation.isPending ? '로그인 중...' : '🆕 신규 유저로 로그인'}
                 </DevButton>
                 <DevButton
                     onClick={handleExistingUserLogin}
-                    disabled={loginMutation.isPending}
+                    disabled={loginMutation.isPending || !canInteract}
                     variant="existing"
                 >
                     {loginMutation.isPending ? '로그인 중...' : '👤 기존 유저로 로그인'}

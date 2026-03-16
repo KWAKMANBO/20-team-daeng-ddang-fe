@@ -29,7 +29,7 @@ export default defineConfig({
   ],
 
   webServer: {
-    command: 'pnpm build && node .next/standalone/server.js',
+    command: 'pnpm build && pnpm start',
     port: 3000,
     reuseExistingServer: !process.env.CI,
     timeout: 120000,
