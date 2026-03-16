@@ -1,8 +1,10 @@
-import { test } from '@playwright/test';
+import { expect, test } from '@playwright/test';
 
 test('test', async ({ page }) => {
-    await page.goto('http://localhost:3000/login');
-    await page.getByRole('button', { name: '🆕 신규 유저로 로그인' }).click();
+    await page.goto('/login');
+    const devLoginButton = page.getByRole('button', { name: /신규 유저로 로그인/ });
+    await expect(devLoginButton).toBeVisible({ timeout: 20000 });
+    await devLoginButton.click();
     await page.getByRole('button', { name: '알겠어요!' }).click();
     await page.getByRole('button', { name: '산책 시작 🐕' }).click();
     await page.getByRole('button', { name: '산책 종료' }).click();
