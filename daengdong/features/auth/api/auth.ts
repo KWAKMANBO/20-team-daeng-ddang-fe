@@ -24,7 +24,7 @@ export const kakaoLogin = async (code: string): Promise<LoginResponse> => {
     const useBffAuth = process.env.NEXT_PUBLIC_USE_BFF_AUTH === 'true';
 
     if (useBffAuth) {
-        const res = await fetch("/api/auth/login", {
+        const res = await fetch("/bff/auth/login", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ code }),
@@ -78,7 +78,7 @@ export const devLogin = async (data: DevLoginRequest): Promise<DevLoginResponse>
     const useBffAuth = process.env.NEXT_PUBLIC_USE_BFF_AUTH === 'true';
 
     if (useBffAuth) {
-        const res = await fetch("/api/auth/dev-login", {
+        const res = await fetch("/bff/auth/dev-login", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(data),

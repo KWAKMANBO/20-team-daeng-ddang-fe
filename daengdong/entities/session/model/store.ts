@@ -22,7 +22,7 @@ export const useAuthStore = create<AuthState>((set) => ({
         }
 
         try {
-            const response = await fetch('/api/auth/session', {
+            const response = await fetch('/bff/auth/session', {
                 method: 'GET',
                 credentials: 'include',
                 cache: 'no-store',

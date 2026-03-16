@@ -20,7 +20,7 @@ export const useWalkCleanup = () => {
                 isValidated: false,
             });
 
-            fetch(`/api/proxy/walks/${walkId}/end`, {
+            fetch(`/bff/proxy/walks/${walkId}/end`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

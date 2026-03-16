@@ -36,7 +36,7 @@ export const connectWalkAnalysisSSE = (
     onDone: (data: AnalysisSSEData) => void,
     onError: (err: Error) => void
 ): (() => void) => {
-    const url = `/api/sse/walks/${walkId}/tasks/${taskId}`;
+    const url = `/bff/sse/walks/${walkId}/tasks/${taskId}`;
     let settled = false;
 
     const es = new EventSource(url, {
@@ -93,7 +93,7 @@ export const connectHealthcareSSE = (
     onDone: (data: AnalysisSSEData) => void,
     onError: (err: Error) => void
 ): (() => void) => {
-    const url = `/api/sse/healthcares/tasks/${taskId}`;
+    const url = `/bff/sse/healthcares/tasks/${taskId}`;
     let settled = false;
 
     const es = new EventSource(url, {

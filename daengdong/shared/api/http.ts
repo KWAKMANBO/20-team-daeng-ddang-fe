@@ -3,7 +3,7 @@ import { clearLegacyAccessToken, getLegacyAccessToken } from '@/shared/lib/auth/
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 const USE_BFF_AUTH = process.env.NEXT_PUBLIC_USE_BFF_AUTH === 'true';
-const RESOLVED_BASE_URL = USE_BFF_AUTH ? '/api/proxy' : API_BASE_URL;
+const RESOLVED_BASE_URL = USE_BFF_AUTH ? '/bff/proxy' : API_BASE_URL;
 
 if (!RESOLVED_BASE_URL) {
     throw new Error('API_BASE_URL is not defined');
@@ -61,7 +61,7 @@ http.interceptors.response.use(
                     window.location.href = '/login';
                 } else {
                     try {
-                        const sessionResponse = await fetch('/api/auth/session', {
+                        const sessionResponse = await fetch('/bff/auth/session', {
                             method: 'GET',
                             credentials: 'include',
                             cache: 'no-store',

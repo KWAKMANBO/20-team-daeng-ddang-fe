@@ -2,7 +2,7 @@ import { expect, test } from '@playwright/test';
 
 test('test', async ({ page }) => {
 
-  const response = await page.request.post('/api/auth/dev-login', {
+  const response = await page.request.post('/bff/auth/dev-login', {
     data: {
       kakaoUserId: 888888,
       nickname: 'dev-existing-user',

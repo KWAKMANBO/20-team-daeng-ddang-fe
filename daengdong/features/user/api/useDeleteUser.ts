@@ -17,7 +17,7 @@ export const useDeleteUser = () => {
         onSuccess: async () => {
             const useBffAuth = process.env.NEXT_PUBLIC_USE_BFF_AUTH === 'true';
             if (useBffAuth) {
-                await fetch('/api/auth/logout', {
+                await fetch('/bff/auth/logout', {
                     method: 'POST',
                     credentials: 'include',
                 }).catch(() => undefined);

@@ -1,5 +1,5 @@
 import { NextRequest } from "next/server";
-import { proxySse } from "@/app/api/sse/_lib";
+import { proxySse } from "@/app/bff/sse/_lib";
 
 type Params = {
   params: Promise<{

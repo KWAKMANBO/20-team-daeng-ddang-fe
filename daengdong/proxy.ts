@@ -50,7 +50,7 @@ export function proxy(request: NextRequest) {
 export const config = {
     // 미들웨어 적용 경로
     matcher: [
-        '/((?!api|next-api|_next/static|_next/image|favicon.ico).*)',
+        '/((?!api|bff|next-api|_next/static|_next/image|favicon.ico).*)',
         '/map-proxy/static-map',
     ],
 };

@@ -61,7 +61,6 @@ async function handleProxy(request: NextRequest, path: string[]) {
   let refreshSetCookie: string | null = null;
   let accessToken = session?.accessToken;
 
-  // 메모리 세션 유실 시 refresh 쿠키 기반 복구
   if (!accessToken && sid) {
     const refreshed = await refreshAccessTokenFromBackend(request);
     refreshSetCookie = refreshed.setCookie ?? null;
@@ -99,7 +98,6 @@ async function handleProxy(request: NextRequest, path: string[]) {
 
   let backendResponse = await fetch(targetUrl, init);
 
-  // 토큰 만료 시 토큰 갱신
   if (backendResponse.status === 401 && sid) {
     const refreshed = await refreshAccessTokenFromBackend(request);
     refreshSetCookie = refreshed.setCookie ?? refreshSetCookie;
@@ -183,4 +181,3 @@ export async function OPTIONS(request: NextRequest, { params }: ProxyRouteParams
   const { path } = await params;
   return handleProxy(request, path);
 }
-

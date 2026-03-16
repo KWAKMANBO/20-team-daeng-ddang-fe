@@ -67,7 +67,7 @@ export const useWalkControl = () => {
     const resolveWalkWsAccessToken = useCallback(async (): Promise<string | undefined> => {
         if (useBffRealtime) {
             try {
-                const response = await fetch('/api/ws/walks/auth', {
+                const response = await fetch('/bff/ws/walks/auth', {
                     method: 'GET',
                     credentials: 'include',
                     cache: 'no-store',

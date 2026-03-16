@@ -14,7 +14,6 @@ export async function GET(request: NextRequest) {
 
   let refreshSetCookie: string | null = null;
 
-  // 메모리 세션 유실 시 refresh 쿠키로 자동 복구
   if (sid && !session) {
     const refreshHeaders = new Headers();
     const cookieHeader = request.headers.get("cookie");
@@ -49,7 +48,6 @@ export async function GET(request: NextRequest) {
     response.headers.append("set-cookie", refreshSetCookie);
   }
 
-  // 서버 메모리 세션이 없는 stale 쿠키 정리
   if (sid && !session) {
     response.cookies.set("dd_sid", "", {
       httpOnly: true,

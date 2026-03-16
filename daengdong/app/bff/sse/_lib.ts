@@ -90,7 +90,6 @@ export const proxySse = async (request: NextRequest, backendPath: string): Promi
     redirect: "manual",
   });
 
-  // 만료 시 refresh 후 1회 재연결
   if (upstream.status === 401) {
     const refreshed = await refreshAccessToken(request);
     refreshSetCookie = refreshed.setCookie ?? refreshSetCookie;
