@@ -1,6 +1,5 @@
 "use client";
 
-import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useMutation } from '@tanstack/react-query';
 import styled from '@emotion/styled';
@@ -9,14 +8,11 @@ import { useAuthStore } from '@/entities/session/model/store';
 import { useToastStore } from '@/shared/stores/useToastStore';
 
 export const DevLoginButton = () => {
-    const [mounted, setMounted] = useState(false);
     const router = useRouter();
     const setLoggedIn = useAuthStore((state) => state.setLoggedIn);
-
-    useEffect(() => {
-        // eslint-disable-next-line react-hooks/set-state-in-effect
-        setMounted(true);
-    }, []);
+    const isE2EEnabled = process.env.NEXT_PUBLIC_ENABLE_DEV_LOGIN === 'true';
+    const hostname = typeof window === 'undefined' ? '' : window.location.hostname;
+    const isLocalhost = hostname === 'localhost' || hostname === '127.0.0.1' || hostname === '::1';
 
     const loginMutation = useMutation({
         mutationFn: devLogin,
@@ -40,14 +36,6 @@ export const DevLoginButton = () => {
             });
         },
     });
-
-    if (!mounted) {
-        return null;
-    }
-
-    const hostname = window.location.hostname;
-    const isLocalhost = hostname === 'localhost' || hostname === '127.0.0.1' || hostname === '::1';
-    const isE2EEnabled = process.env.NEXT_PUBLIC_ENABLE_DEV_LOGIN === 'true';
 
     if (!isLocalhost && !isE2EEnabled) {
         return null;
