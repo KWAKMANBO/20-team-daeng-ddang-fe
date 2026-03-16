@@ -45,9 +45,11 @@ export const DevLoginButton = () => {
         return null;
     }
 
-    const isLocalhost = window.location.hostname === 'localhost';
+    const hostname = window.location.hostname;
+    const isLocalhost = hostname === 'localhost' || hostname === '127.0.0.1' || hostname === '::1';
+    const isE2EEnabled = process.env.NEXT_PUBLIC_ENABLE_DEV_LOGIN === 'true';
 
-    if (!isLocalhost) {
+    if (!isLocalhost && !isE2EEnabled) {
         return null;
     }
 
