@@ -74,13 +74,11 @@ const getInitialRecords = async (selectedDate: string): Promise<DailyRecordItem[
 };
 
 type PageProps = {
-    searchParams?:
-        | Record<string, string | string[] | undefined>
-        | Promise<Record<string, string | string[] | undefined>>;
+    searchParams?: Promise<Record<string, string | string[] | undefined>>;
 };
 
 export default async function Page({ searchParams }: PageProps) {
-    const params = searchParams ? await Promise.resolve(searchParams) : {};
+    const params = (await searchParams) ?? {};
     const dateParam = Array.isArray(params.date) ? params.date[0] : params.date;
     const selectedDate = normalizeDate(dateParam);
     const initialRecords = await getInitialRecords(selectedDate);
