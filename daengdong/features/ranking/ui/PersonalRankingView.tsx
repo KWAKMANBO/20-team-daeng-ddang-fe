@@ -71,6 +71,7 @@ export const PersonalRankingView = ({ initialSummaryData, initialListData }: Per
     }, [isAuthChecked, isLoggedIn, isUserLoading, isDogLoading, isDogRegistered, openModal, router]);
 
     if (isSummaryLoading && !summaryData && topRanks.length === 0) return <LoadingView message="랭킹 불러오는 중..." />;
+    const isRankingEmpty = topRanks.length === 0 && rankingList.length === 0;
 
     return (
         <Container ref={containerRef}>
@@ -83,19 +84,27 @@ export const PersonalRankingView = ({ initialSummaryData, initialListData }: Per
                     onScopeChange={setScope}
                     onRegionClick={() => setIsRegionModalOpen(true)}
                 />
-                <UpdateNotice>랭킹은 매일 00시에 업데이트됩니다!</UpdateNotice>
             </FixedHeader>
 
             <ScrollContent ref={scrollContentRef}>
-                {topRanks.length > 0 && <TopPodium topRanks={topRanks} />}
-                <RankingList
-                    ranks={rankingList}
-                    myRankInfo={myRankInfo}
-                    onLoadMore={fetchNextPage}
-                    hasMore={!!hasNextPage}
-                    isFetchingNextPage={isFetchingNextPage}
-                    scrollContainerRef={scrollContentRef}
-                />
+                {isRankingEmpty ? (
+                    <EmptyState>
+                        <EmptyTitle>아직 랭킹 데이터가 없어요</EmptyTitle>
+                        <EmptyDescription>산책 기록이 쌓이면 랭킹에 반영돼요.</EmptyDescription>
+                    </EmptyState>
+                ) : (
+                    <>
+                        {topRanks.length > 0 && <TopPodium topRanks={topRanks} />}
+                        <RankingList
+                            ranks={rankingList}
+                            myRankInfo={myRankInfo}
+                            onLoadMore={fetchNextPage}
+                            hasMore={!!hasNextPage}
+                            isFetchingNextPage={isFetchingNextPage}
+                            scrollContainerRef={scrollContentRef}
+                        />
+                    </>
+                )}
             </ScrollContent>
 
             <ScrollToTopButton scrollContainerRef={scrollContentRef} hasMyRank={!!myRankInfo} />
@@ -137,7 +146,8 @@ export const PersonalRankingView = ({ initialSummaryData, initialListData }: Per
 
 const Container = styled.div`
     background-color: white;
-    height: 100svh;
+    height: 100%;
+    min-height: 0;
     display: flex;
     flex-direction: column;
     position: relative;
@@ -153,6 +163,7 @@ const FixedHeader = styled.div`
 
 const ScrollContent = styled.div`
     flex: 1;
+    min-height: 0;
     overflow-y: auto;
     
     /* Hide scrollbar */
@@ -186,12 +197,28 @@ const MyRankRow = styled.div`
     border-radius: 5px;
 `;
 
-const UpdateNotice = styled.div`
-    font-size: 11px;
-    color: ${colors.gray[500]};
+const EmptyState = styled.div`
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100%;
+    padding: ${spacing[6]}px;
     text-align: center;
-    padding-bottom: ${spacing[2]}px;
-    margin-top: ${spacing[2]}px;
+    box-sizing: border-box;
+`;
+
+const EmptyTitle = styled.p`
+    margin: 0;
+    color: ${colors.gray[800]};
+    font-size: 16px;
+    font-weight: 700;
+`;
+
+const EmptyDescription = styled.p`
+    margin: ${spacing[2]}px 0 0;
+    color: ${colors.gray[500]};
+    font-size: 13px;
 `;
 
 const DistanceUnit = styled.span`

@@ -54,7 +54,8 @@ const ScreenContainer = styled.div`
 
 const Content = styled.div`
     flex: 1;
-    overflow-y: auto;
+    min-height: 0;
+    overflow: hidden;
     /* Hide scrollbar */
     &::-webkit-scrollbar {
         display: none;
