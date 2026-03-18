@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useSuspenseQuery } from '@tanstack/react-query';
 import { footprintsApi } from '../../../entities/footprints/api/footprints';
 import { useAuthStore } from '@/entities/session/model/store';
 
@@ -18,6 +18,13 @@ export const useDailyRecordsQuery = (date: string | null) => {
         queryKey: ['footprints', 'daily', date],
         queryFn: () => date ? footprintsApi.getDailyRecords(date) : Promise.resolve([]),
         enabled: !!date && isLoggedIn,
+    });
+};
+
+export const useDailyRecordsSuspenseQuery = (date: string) => {
+    return useSuspenseQuery({
+        queryKey: ['footprints', 'daily', date],
+        queryFn: () => footprintsApi.getDailyRecords(date),
     });
 };
 

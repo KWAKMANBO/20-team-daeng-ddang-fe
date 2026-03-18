@@ -2,37 +2,56 @@
 
 import styled from "@emotion/styled";
 import { colors, radius, spacing } from "@/shared/styles/tokens";
+import { DeferredRender } from "@/shared/components/DeferredRender";
+import { Header } from "@/widgets/Header";
 
 export const FootprintsPageLoading = () => {
     return (
-        <ScreenContainer>
-            <HeaderSkeleton />
+        <DeferredRender delayMs={150}>
+            <ScreenContainer>
+                <Content>
+                    <Header title="발자국" showBackButton={false} isSticky={false} />
 
-            <CalendarCard>
-                <CalendarTitleSkeleton />
-                <CalendarDays>
-                    {Array.from({ length: 7 }).map((_, idx) => (
-                        <CalendarDaySkeleton key={idx} />
-                    ))}
-                </CalendarDays>
-            </CalendarCard>
+                    <CalendarSectionSkeleton>
+                        <CalendarHeader>
+                            <MonthNav />
+                            <CalendarTitleSkeleton />
+                            <MonthNav />
+                        </CalendarHeader>
+                        <WeekDaysRow>
+                            {Array.from({ length: 7 }).map((_, idx) => (
+                                <WeekDay key={idx} />
+                            ))}
+                        </WeekDaysRow>
+                        <CalendarGrid>
+                            {Array.from({ length: 5 }).map((_, rowIdx) => (
+                                <CalendarRow key={rowIdx}>
+                                    {Array.from({ length: 7 }).map((_, colIdx) => (
+                                        <DayDot key={`${rowIdx}-${colIdx}`} />
+                                    ))}
+                                </CalendarRow>
+                            ))}
+                        </CalendarGrid>
+                    </CalendarSectionSkeleton>
 
-            <ListSection>
-                <ListTitleSkeleton />
-                <SkeletonList>
-                    {Array.from({ length: 5 }).map((_, idx) => (
-                        <SkeletonItem key={idx}>
-                            <SkeletonIcon />
-                            <SkeletonInfo>
-                                <SkeletonLine $width="45%" />
-                                <SkeletonLine $width="70%" />
-                            </SkeletonInfo>
-                            <SkeletonThumb />
-                        </SkeletonItem>
-                    ))}
-                </SkeletonList>
-            </ListSection>
-        </ScreenContainer>
+                    <ListSection>
+                        <ListTitleSkeleton />
+                        <SkeletonList>
+                            {Array.from({ length: 5 }).map((_, idx) => (
+                                <SkeletonItem key={idx}>
+                                    <SkeletonIcon />
+                                    <SkeletonInfo>
+                                        <SkeletonLine $width="45%" />
+                                        <SkeletonLine $width="70%" />
+                                    </SkeletonInfo>
+                                    <SkeletonThumb />
+                                </SkeletonItem>
+                            ))}
+                        </SkeletonList>
+                    </ListSection>
+                </Content>
+            </ScreenContainer>
+        </DeferredRender>
     );
 };
 
@@ -59,51 +78,99 @@ const shimmer = `
 const ScreenContainer = styled.div`
     display: flex;
     flex-direction: column;
-    min-height: 100dvh;
-    background: ${colors.gray[50]};
+    height: 100svh;
+    height: 100dvh;
+    background-color: ${colors.gray[50]};
+    overflow: hidden;
     padding-bottom: 70px;
+    width: 100%;
+    max-width: 430px;
+    margin: 0 auto;
 `;
 
-const HeaderSkeleton = styled.div`
-    height: 56px;
-    background: white;
-    border-bottom: 1px solid ${colors.gray[100]};
+const Content = styled.div`
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+    padding-bottom: 90px;
+
+    &::-webkit-scrollbar {
+        display: none;
+    }
+    -ms-overflow-style: none;
+    scrollbar-width: none;
 `;
 
-const CalendarCard = styled.div`
+const CalendarSectionSkeleton = styled.div`
     padding: ${spacing[4]}px;
     background: white;
-    margin: 8px ${spacing[4]}px 0;
-    border-radius: ${radius.md};
+    border-bottom-left-radius: ${radius.lg};
+    border-bottom-right-radius: ${radius.lg};
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+`;
+
+const CalendarHeader = styled.div`
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: ${spacing[4]}px;
+    padding: 0 ${spacing[4]}px;
+`;
+
+const MonthNav = styled.div`
+    width: 22px;
+    height: 22px;
+    border-radius: ${radius.sm};
+    ${shimmer}
 `;
 
 const CalendarTitleSkeleton = styled.div`
     width: 120px;
     height: 18px;
-    border-radius: ${radius.sm};
-    margin-bottom: ${spacing[3]}px;
+    border-radius: ${radius.md};
     ${shimmer}
 `;
 
-const CalendarDays = styled.div`
+const WeekDaysRow = styled.div`
     display: flex;
-    gap: 8px;
+    margin-bottom: ${spacing[1]}px;
 `;
 
-const CalendarDaySkeleton = styled.div`
-    width: 36px;
-    height: 36px;
+const WeekDay = styled.div`
+    flex: 1;
+    height: 12px;
+    margin: 0 12px;
+    border-radius: ${radius.sm};
+    ${shimmer}
+`;
+
+const CalendarGrid = styled.div`
+    display: flex;
+    flex-direction: column;
+`;
+
+const CalendarRow = styled.div`
+    display: flex;
+    height: 64px;
+`;
+
+const DayDot = styled.div`
+    width: 32px;
+    height: 32px;
     border-radius: ${radius.full};
+    margin: auto;
     ${shimmer}
 `;
 
 const ListSection = styled.div`
     padding: ${spacing[4]}px;
+    background-color: ${colors.gray[50]};
 `;
 
 const ListTitleSkeleton = styled.div`
-    width: 110px;
-    height: 18px;
+    width: 120px;
+    height: 20px;
     border-radius: ${radius.sm};
     margin-bottom: ${spacing[3]}px;
     ${shimmer}

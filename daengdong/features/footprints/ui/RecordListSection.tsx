@@ -4,15 +4,16 @@ import styled from "@emotion/styled";
 import { format } from "date-fns";
 import { ko } from "date-fns/locale";
 import { colors, radius, spacing } from "@/shared/styles/tokens";
-import { useDailyRecordsQuery } from "@/features/footprints/api/useFootprintsQuery";
+import { useDailyRecordsSuspenseQuery } from "@/features/footprints/api/useFootprintsQuery";
 import { DailyRecordItem } from "@/entities/footprints/model/types";
 import { useAuthStore } from "@/entities/session/model/store";
+import { DeferredRender } from "@/shared/components/DeferredRender";
 import Image from "next/image";
 import MedicalCrossIcon from "@/shared/assets/icons/medical-cross.svg";
 import WalkIcon from "@/shared/assets/icons/paw-print.svg";
 
 
-import { useRef, useState, useEffect } from 'react';
+import { Suspense, useRef, useState, useEffect } from 'react';
 import { useVirtualizer } from '@tanstack/react-virtual';
 
 interface RecordListSectionProps {
@@ -22,12 +23,43 @@ interface RecordListSectionProps {
 }
 
 export const RecordListSection = ({ selectedDate, onRecordClick, scrollContainerRef }: RecordListSectionProps) => {
-    const { data: records, isLoading, isFetching } = useDailyRecordsQuery(selectedDate);
     const isAuthChecked = useAuthStore((state) => state.isAuthChecked);
-    const listRef = useRef<HTMLDivElement>(null);
-    const [listOffset, setListOffset] = useState(0);
+    const isLoggedIn = useAuthStore((state) => state.isLoggedIn);
 
     const formattedDate = format(new Date(selectedDate), "M월 d일 EEEE", { locale: ko });
+
+    if (!isAuthChecked || !isLoggedIn) {
+        return (
+            <Container>
+                <Header>{formattedDate}</Header>
+            </Container>
+        );
+    }
+
+    return (
+        <Container>
+            <Header>{formattedDate}</Header>
+            <Suspense
+                fallback={
+                    <DeferredRender delayMs={150}>
+                        <RecordListSkeleton />
+                    </DeferredRender>
+                }
+            >
+                <RecordListContent
+                    selectedDate={selectedDate}
+                    onRecordClick={onRecordClick}
+                    scrollContainerRef={scrollContainerRef}
+                />
+            </Suspense>
+        </Container>
+    );
+};
+
+const RecordListContent = ({ selectedDate, onRecordClick, scrollContainerRef }: RecordListSectionProps) => {
+    const { data: records } = useDailyRecordsSuspenseQuery(selectedDate);
+    const listRef = useRef<HTMLDivElement>(null);
+    const [listOffset, setListOffset] = useState(0);
 
     useEffect(() => {
         if (listRef.current) {
@@ -43,92 +75,78 @@ export const RecordListSection = ({ selectedDate, onRecordClick, scrollContainer
         overscan: 3,
     });
 
-    const shouldShowSkeleton =
-        !isAuthChecked ||
-        isLoading ||
-        (isFetching && (!records || records.length === 0));
-
-    if (shouldShowSkeleton) {
-        return (
-            <Container>
-                <Header>{formattedDate}</Header>
-                <SkeletonList aria-label="기록 로딩 중">
-                    {Array.from({ length: 5 }).map((_, idx) => (
-                        <SkeletonItem key={idx}>
-                            <SkeletonIcon />
-                            <SkeletonInfo>
-                                <SkeletonLine $width="45%" />
-                                <SkeletonLine $width="70%" />
-                            </SkeletonInfo>
-                            <SkeletonThumb />
-                        </SkeletonItem>
-                    ))}
-                </SkeletonList>
-            </Container>
-        );
-    }
-
     if (!records || records.length === 0) {
         return (
-            <Container>
-                <Header>{formattedDate}</Header>
-                <EmptyState>
-                    <EmptyIcon>📝</EmptyIcon>
-                    <Message>이 날의 기록이 없습니다.</Message>
-                </EmptyState>
-            </Container>
+            <EmptyState>
+                <EmptyIcon>📝</EmptyIcon>
+                <Message>이 날의 기록이 없습니다.</Message>
+            </EmptyState>
         );
     }
 
     return (
-        <Container>
-            <Header>{formattedDate}</Header>
-            <div ref={listRef}>
-                <List style={{ height: `${virtualizer.getTotalSize()}px`, position: 'relative' }}>
-                    {virtualizer.getVirtualItems().map((virtualRow) => {
-                        const record = records[virtualRow.index];
-                        return (
-                            <div
-                                key={`${record.type}-${record.id}`}
-                                style={{
-                                    position: 'absolute',
-                                    top: 0,
-                                    left: 0,
-                                    width: '100%',
-                                    transform: `translateY(${virtualRow.start - listOffset}px)`,
-                                }}
-                            >
-                                <RecordItem onClick={() => onRecordClick(record)}>
-                                    <IconWrapper $type={record.type}>
-                                        {record.type === 'WALK'
-                                            ? <WalkIcon width={20} height={20} />
-                                            : <MedicalCrossIcon width={25} height={25} />
-                                        }
-                                    </IconWrapper>
-                                    <Info>
-                                        <Title>
-                                            {record.createdAt ? (
-                                                <>
-                                                    <TimeText $type={record.type}>{format(new Date(record.createdAt), 'a h시 mm분', { locale: ko })}</TimeText>
-                                                    <span>{record.type === 'WALK' ? '산책일지' : '헬스케어'}</span>
-                                                </>
-                                            ) : (
-                                                record.title
-                                            )}
-                                        </Title>
-                                    </Info>
-                                    {record.imageUrl && (
-                                        <Thumbnail>
-                                            <Image src={record.imageUrl} alt="thumbnail" width={48} height={48} style={{ objectFit: 'cover' }} />
-                                        </Thumbnail>
-                                    )}
-                                </RecordItem>
-                            </div>
-                        );
-                    })}
-                </List>
-            </div>
-        </Container>
+        <div ref={listRef}>
+            <List style={{ height: `${virtualizer.getTotalSize()}px`, position: 'relative' }}>
+                {virtualizer.getVirtualItems().map((virtualRow) => {
+                    const record = records[virtualRow.index];
+                    return (
+                        <div
+                            key={`${record.type}-${record.id}`}
+                            style={{
+                                position: 'absolute',
+                                top: 0,
+                                left: 0,
+                                width: '100%',
+                                transform: `translateY(${virtualRow.start - listOffset}px)`,
+                            }}
+                        >
+                            <RecordItem onClick={() => onRecordClick(record)}>
+                                <IconWrapper $type={record.type}>
+                                    {record.type === 'WALK'
+                                        ? <WalkIcon width={20} height={20} />
+                                        : <MedicalCrossIcon width={25} height={25} />
+                                    }
+                                </IconWrapper>
+                                <Info>
+                                    <Title>
+                                        {record.createdAt ? (
+                                            <>
+                                                <TimeText $type={record.type}>{format(new Date(record.createdAt), 'a h시 mm분', { locale: ko })}</TimeText>
+                                                <span>{record.type === 'WALK' ? '산책일지' : '헬스케어'}</span>
+                                            </>
+                                        ) : (
+                                            record.title
+                                        )}
+                                    </Title>
+                                </Info>
+                                {record.imageUrl && (
+                                    <Thumbnail>
+                                        <Image src={record.imageUrl} alt="thumbnail" width={48} height={48} style={{ objectFit: 'cover' }} />
+                                    </Thumbnail>
+                                )}
+                            </RecordItem>
+                        </div>
+                    );
+                })}
+            </List>
+        </div>
+    );
+};
+
+const RecordListSkeleton = () => {
+    return (
+        <SkeletonList aria-label="기록 로딩 중">
+            {Array.from({ length: 5 }).map((_, idx) => (
+                <SkeletonItem key={idx}>
+                    <SkeletonIcon />
+                    <SkeletonInfo>
+                        <SkeletonLine $width="45%" />
+                        <SkeletonLine $width="70%" />
+                    </SkeletonInfo>
+                    <SkeletonThumb />
+                </SkeletonItem>
+            ))}
+        </SkeletonList>
     );
 };
 
