@@ -4,29 +4,62 @@ import styled from "@emotion/styled";
 import { format } from "date-fns";
 import { ko } from "date-fns/locale";
 import { colors, radius, spacing } from "@/shared/styles/tokens";
-import { useDailyRecordsQuery } from "@/features/footprints/api/useFootprintsQuery";
+import { useDailyRecordsSuspenseQuery } from "@/features/footprints/api/useFootprintsQuery";
 import { DailyRecordItem } from "@/entities/footprints/model/types";
+import { useAuthStore } from "@/entities/session/model/store";
+import { DeferredRender } from "@/shared/components/DeferredRender";
 import Image from "next/image";
 import MedicalCrossIcon from "@/shared/assets/icons/medical-cross.svg";
 import WalkIcon from "@/shared/assets/icons/paw-print.svg";
 
 
-import { useRef, useState, useEffect } from 'react';
+import { Suspense, useRef, useState, useEffect } from 'react';
 import { useVirtualizer } from '@tanstack/react-virtual';
 
 interface RecordListSectionProps {
     selectedDate: string;
     onRecordClick: (item: DailyRecordItem) => void;
     scrollContainerRef: React.RefObject<HTMLDivElement | null>;
-    initialRecords?: DailyRecordItem[];
 }
 
-export const RecordListSection = ({ selectedDate, onRecordClick, scrollContainerRef, initialRecords }: RecordListSectionProps) => {
-    const { data: records, isLoading } = useDailyRecordsQuery(selectedDate, { initialData: initialRecords });
-    const listRef = useRef<HTMLDivElement>(null);
-    const [listOffset, setListOffset] = useState(0);
+export const RecordListSection = ({ selectedDate, onRecordClick, scrollContainerRef }: RecordListSectionProps) => {
+    const isAuthChecked = useAuthStore((state) => state.isAuthChecked);
+    const isLoggedIn = useAuthStore((state) => state.isLoggedIn);
 
     const formattedDate = format(new Date(selectedDate), "M월 d일 EEEE", { locale: ko });
+
+    if (!isAuthChecked || !isLoggedIn) {
+        return (
+            <Container>
+                <Header>{formattedDate}</Header>
+            </Container>
+        );
+    }
+
+    return (
+        <Container>
+            <Header>{formattedDate}</Header>
+            <Suspense
+                fallback={
+                    <DeferredRender delayMs={150}>
+                        <RecordListSkeleton />
+                    </DeferredRender>
+                }
+            >
+                <RecordListContent
+                    selectedDate={selectedDate}
+                    onRecordClick={onRecordClick}
+                    scrollContainerRef={scrollContainerRef}
+                />
+            </Suspense>
+        </Container>
+    );
+};
+
+const RecordListContent = ({ selectedDate, onRecordClick, scrollContainerRef }: RecordListSectionProps) => {
+    const { data: records } = useDailyRecordsSuspenseQuery(selectedDate);
+    const listRef = useRef<HTMLDivElement>(null);
+    const [listOffset, setListOffset] = useState(0);
 
     useEffect(() => {
         if (listRef.current) {
@@ -42,76 +75,78 @@ export const RecordListSection = ({ selectedDate, onRecordClick, scrollContainer
         overscan: 3,
     });
 
-    if (isLoading) {
-        return (
-            <Container>
-                <Header>{formattedDate}</Header>
-                <Message>기록을 불러오는 중...</Message>
-            </Container>
-        );
-    }
-
     if (!records || records.length === 0) {
         return (
-            <Container>
-                <Header>{formattedDate}</Header>
-                <EmptyState>
-                    <EmptyIcon>📝</EmptyIcon>
-                    <Message>이 날의 기록이 없습니다.</Message>
-                </EmptyState>
-            </Container>
+            <EmptyState>
+                <EmptyIcon>📝</EmptyIcon>
+                <Message>이 날의 기록이 없습니다.</Message>
+            </EmptyState>
         );
     }
 
     return (
-        <Container>
-            <Header>{formattedDate}</Header>
-            <div ref={listRef}>
-                <List style={{ height: `${virtualizer.getTotalSize()}px`, position: 'relative' }}>
-                    {virtualizer.getVirtualItems().map((virtualRow) => {
-                        const record = records[virtualRow.index];
-                        return (
-                            <div
-                                key={`${record.type}-${record.id}`}
-                                style={{
-                                    position: 'absolute',
-                                    top: 0,
-                                    left: 0,
-                                    width: '100%',
-                                    transform: `translateY(${virtualRow.start - listOffset}px)`,
-                                }}
-                            >
-                                <RecordItem onClick={() => onRecordClick(record)}>
-                                    <IconWrapper $type={record.type}>
-                                        {record.type === 'WALK'
-                                            ? <WalkIcon width={20} height={20} />
-                                            : <MedicalCrossIcon width={25} height={25} />
-                                        }
-                                    </IconWrapper>
-                                    <Info>
-                                        <Title>
-                                            {record.createdAt ? (
-                                                <>
-                                                    <TimeText $type={record.type}>{format(new Date(record.createdAt), 'a h시 mm분', { locale: ko })}</TimeText>
-                                                    <span>{record.type === 'WALK' ? '산책일지' : '헬스케어'}</span>
-                                                </>
-                                            ) : (
-                                                record.title
-                                            )}
-                                        </Title>
-                                    </Info>
-                                    {record.imageUrl && (
-                                        <Thumbnail>
-                                            <Image src={record.imageUrl} alt="thumbnail" width={48} height={48} style={{ objectFit: 'cover' }} />
-                                        </Thumbnail>
-                                    )}
-                                </RecordItem>
-                            </div>
-                        );
-                    })}
-                </List>
-            </div>
-        </Container>
+        <div ref={listRef}>
+            <List style={{ height: `${virtualizer.getTotalSize()}px`, position: 'relative' }}>
+                {virtualizer.getVirtualItems().map((virtualRow) => {
+                    const record = records[virtualRow.index];
+                    return (
+                        <div
+                            key={`${record.type}-${record.id}`}
+                            style={{
+                                position: 'absolute',
+                                top: 0,
+                                left: 0,
+                                width: '100%',
+                                transform: `translateY(${virtualRow.start - listOffset}px)`,
+                            }}
+                        >
+                            <RecordItem onClick={() => onRecordClick(record)}>
+                                <IconWrapper $type={record.type}>
+                                    {record.type === 'WALK'
+                                        ? <WalkIcon width={20} height={20} />
+                                        : <MedicalCrossIcon width={25} height={25} />
+                                    }
+                                </IconWrapper>
+                                <Info>
+                                    <Title>
+                                        {record.createdAt ? (
+                                            <>
+                                                <TimeText $type={record.type}>{format(new Date(record.createdAt), 'a h시 mm분', { locale: ko })}</TimeText>
+                                                <span>{record.type === 'WALK' ? '산책일지' : '헬스케어'}</span>
+                                            </>
+                                        ) : (
+                                            record.title
+                                        )}
+                                    </Title>
+                                </Info>
+                                {record.imageUrl && (
+                                    <Thumbnail>
+                                        <Image src={record.imageUrl} alt="thumbnail" width={48} height={48} style={{ objectFit: 'cover' }} />
+                                    </Thumbnail>
+                                )}
+                            </RecordItem>
+                        </div>
+                    );
+                })}
+            </List>
+        </div>
+    );
+};
+
+const RecordListSkeleton = () => {
+    return (
+        <SkeletonList aria-label="기록 로딩 중">
+            {Array.from({ length: 5 }).map((_, idx) => (
+                <SkeletonItem key={idx}>
+                    <SkeletonIcon />
+                    <SkeletonInfo>
+                        <SkeletonLine $width="45%" />
+                        <SkeletonLine $width="70%" />
+                    </SkeletonInfo>
+                    <SkeletonThumb />
+                </SkeletonItem>
+            ))}
+        </SkeletonList>
     );
 };
 
@@ -210,4 +245,69 @@ const TimeText = styled.span<{ $type: 'WALK' | 'HEALTH' }>`
     color: ${({ $type }) => $type === 'WALK' ? colors.primary[300] : colors.semantic.success};
     font-weight: 700;
     margin-right: 6px;
+`;
+
+const shimmer = `
+  background: linear-gradient(
+    90deg,
+    ${colors.gray[200]} 25%,
+    ${colors.gray[100]} 37%,
+    ${colors.gray[200]} 63%
+  );
+  background-size: 400% 100%;
+  animation: shimmer 1.4s ease infinite;
+
+  @keyframes shimmer {
+    0% {
+      background-position: 100% 0;
+    }
+    100% {
+      background-position: 0 0;
+    }
+  }
+`;
+
+const SkeletonList = styled.div`
+    display: flex;
+    flex-direction: column;
+    gap: ${spacing[3]}px;
+`;
+
+const SkeletonItem = styled.div`
+    display: flex;
+    align-items: center;
+    background-color: white;
+    padding: ${spacing[3]}px;
+    border-radius: ${radius.md};
+    box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+`;
+
+const SkeletonIcon = styled.div`
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    margin-right: ${spacing[3]}px;
+    ${shimmer}
+`;
+
+const SkeletonInfo = styled.div`
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+`;
+
+const SkeletonLine = styled.div<{ $width: string }>`
+    height: 12px;
+    width: ${({ $width }) => $width};
+    border-radius: ${radius.full};
+    ${shimmer}
+`;
+
+const SkeletonThumb = styled.div`
+    width: 48px;
+    height: 48px;
+    border-radius: ${radius.sm};
+    margin-left: ${spacing[3]}px;
+    ${shimmer}
 `;
