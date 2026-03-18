@@ -10,7 +10,6 @@ import { useToastStore } from '@/shared/stores/useToastStore';
 export const DevLoginButton = () => {
     const router = useRouter();
     const setLoggedIn = useAuthStore((state) => state.setLoggedIn);
-    const isE2EEnabled = process.env.NEXT_PUBLIC_ENABLE_DEV_LOGIN === 'true';
     const hostname = typeof window === 'undefined' ? '' : window.location.hostname;
     const isLocalhost = hostname === 'localhost' || hostname === '127.0.0.1' || hostname === '::1';
     const canInteract = typeof window !== 'undefined';
@@ -38,7 +37,7 @@ export const DevLoginButton = () => {
         },
     });
 
-    if (!isLocalhost && !isE2EEnabled) {
+    if (!isLocalhost) {
         return null;
     }
 
