@@ -6,7 +6,7 @@ on:
     paths-ignore:
       - ".github/workflows/rollback.yml"
   push:
-    branches: ["main"]
+    branches: ["main", "dev"]
     paths-ignore:
       - ".github/workflows/rollback.yml"
   workflow_dispatch: {}
@@ -223,12 +223,12 @@ jobs:
     if: github.event_name == 'push'
 
     environment:
-      name: prod
+      name: ${{ github.ref_name == 'main' && 'prod' || 'dev' }}
     env:
-      ENV_NAME: prod
-      MANIFEST_REPO: 100-hours-a-week/20-team-daeng-ddang-cloud
-      MANIFEST_BRANCH: feat/v3-helm-chart
-      MANIFEST_PATH: helm/frontend/values.yaml
+      ENV_NAME: ${{ github.ref_name == 'main' && 'prod' || 'dev' }}
+      MANIFEST_REPO: ${{ secrets.MANIFEST_REPO }}
+      MANIFEST_BRANCH: ${{ secrets.MANIFEST_BRANCH }}
+      MANIFEST_PATH: ${{ vars.MANIFEST_PATH }}
 
     steps:
       - name: Checkout manifest repo
