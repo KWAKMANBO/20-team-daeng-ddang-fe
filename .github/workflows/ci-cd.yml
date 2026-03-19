@@ -237,7 +237,7 @@ jobs:
         with:
           repository: ${{ env.MANIFEST_REPO }}
           ref: ${{ env.MANIFEST_BRANCH }}
-          token: ${{ secrets.MANIFEST_REPO_PAT }}
+          ssh-key: ${{ secrets.DAENG_MAP_DEPLOY_KEY }}
           path: manifest
 
       - name: Update image tag
