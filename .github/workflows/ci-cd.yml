@@ -6,13 +6,12 @@ on:
     paths-ignore:
       - ".github/workflows/rollback.yml"
   push:
-    branches: ["main", "feat/v3-ci-cd"]
+    branches: ["main"]
     paths-ignore:
       - ".github/workflows/rollback.yml"
   workflow_dispatch: {}
 
 permissions:
-  id-token: write
   contents: read
 
 concurrency:
