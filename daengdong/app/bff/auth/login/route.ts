@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createBffSession } from "@/server/bffSessionStore";
+import { createBffSession, SESSION_TTL_SECONDS } from "@/server/bffSessionStore";
+import { appendSetCookies } from "@/server/setCookie";
 
 const BACKEND_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
@@ -40,10 +41,7 @@ export async function POST(request: NextRequest) {
     status: backendResponse.status,
   });
 
-  const setCookie = backendResponse.headers.get("set-cookie");
-  if (setCookie) {
-    response.headers.append("set-cookie", setCookie);
-  }
+  appendSetCookies(response.headers, backendResponse.headers);
 
   if (accessToken) {
     const isSecureCookie = request.nextUrl.protocol === "https:";
@@ -57,6 +55,7 @@ export async function POST(request: NextRequest) {
       secure: isSecureCookie,
       sameSite: "lax",
       path: "/",
+      maxAge: SESSION_TTL_SECONDS,
     });
   }
 

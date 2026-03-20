@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createBffSession } from "@/server/bffSessionStore";
+import { createBffSession, SESSION_TTL_SECONDS } from "@/server/bffSessionStore";
+import { appendSetCookies } from "@/server/setCookie";
 
 const BACKEND_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 const DEV_LOGIN_TIMEOUT_MS = Number(process.env.BFF_DEV_LOGIN_TIMEOUT_MS ?? 10000);
@@ -72,11 +73,7 @@ export async function POST(request: NextRequest) {
     status: backendResponse.status,
   });
 
-  backendResponse.headers.forEach((value, key) => {
-    if (key.toLowerCase() === "set-cookie") {
-      response.headers.append("set-cookie", value);
-    }
-  });
+  appendSetCookies(response.headers, backendResponse.headers);
 
   if (accessToken) {
     const isSecureCookie =
@@ -93,6 +90,7 @@ export async function POST(request: NextRequest) {
       secure: isSecureCookie,
       sameSite: "lax",
       path: "/",
+      maxAge: SESSION_TTL_SECONDS,
     });
   }
 
