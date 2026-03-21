@@ -4,7 +4,7 @@ import styled from "@emotion/styled";
 import { format } from "date-fns";
 import { ko } from "date-fns/locale";
 import { colors, radius, spacing } from "@/shared/styles/tokens";
-import { useDailyRecordsSuspenseQuery } from "@/features/footprints/api/useFootprintsQuery";
+import { useDailyRecordsQuery } from "@/features/footprints/api/useFootprintsQuery";
 import { DailyRecordItem } from "@/entities/footprints/model/types";
 import { useAuthStore } from "@/entities/session/model/store";
 import { DeferredRender } from "@/shared/components/DeferredRender";
@@ -13,16 +13,17 @@ import MedicalCrossIcon from "@/shared/assets/icons/medical-cross.svg";
 import WalkIcon from "@/shared/assets/icons/paw-print.svg";
 
 
-import { Suspense, useRef, useState, useEffect } from 'react';
+import { useRef, useState, useEffect } from 'react';
 import { useVirtualizer } from '@tanstack/react-virtual';
 
 interface RecordListSectionProps {
     selectedDate: string;
     onRecordClick: (item: DailyRecordItem) => void;
     scrollContainerRef: React.RefObject<HTMLDivElement | null>;
+    initialDailyRecords?: DailyRecordItem[];
 }
 
-export const RecordListSection = ({ selectedDate, onRecordClick, scrollContainerRef }: RecordListSectionProps) => {
+export const RecordListSection = ({ selectedDate, onRecordClick, scrollContainerRef, initialDailyRecords }: RecordListSectionProps) => {
     const isAuthChecked = useAuthStore((state) => state.isAuthChecked);
     const isLoggedIn = useAuthStore((state) => state.isLoggedIn);
 
@@ -39,25 +40,26 @@ export const RecordListSection = ({ selectedDate, onRecordClick, scrollContainer
     return (
         <Container>
             <Header>{formattedDate}</Header>
-            <Suspense
-                fallback={
-                    <DeferredRender delayMs={150}>
-                        <RecordListSkeleton />
-                    </DeferredRender>
-                }
-            >
-                <RecordListContent
-                    selectedDate={selectedDate}
-                    onRecordClick={onRecordClick}
-                    scrollContainerRef={scrollContainerRef}
-                />
-            </Suspense>
+            <RecordListContent
+                selectedDate={selectedDate}
+                onRecordClick={onRecordClick}
+                scrollContainerRef={scrollContainerRef}
+                initialDailyRecords={initialDailyRecords}
+            />
         </Container>
     );
 };
 
-const RecordListContent = ({ selectedDate, onRecordClick, scrollContainerRef }: RecordListSectionProps) => {
-    const { data: records } = useDailyRecordsSuspenseQuery(selectedDate);
+const RecordListContent = ({ selectedDate, onRecordClick, scrollContainerRef, initialDailyRecords }: RecordListSectionProps) => {
+    const { data: records, isLoading } = useDailyRecordsQuery(selectedDate, { initialData: initialDailyRecords });
+
+    if (isLoading && !records) {
+        return (
+            <DeferredRender delayMs={150}>
+                <RecordListSkeleton />
+            </DeferredRender>
+        );
+    }
     const listRef = useRef<HTMLDivElement>(null);
     const [listOffset, setListOffset] = useState(0);
 
