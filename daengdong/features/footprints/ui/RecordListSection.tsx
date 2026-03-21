@@ -52,14 +52,6 @@ export const RecordListSection = ({ selectedDate, onRecordClick, scrollContainer
 
 const RecordListContent = ({ selectedDate, onRecordClick, scrollContainerRef, initialDailyRecords }: RecordListSectionProps) => {
     const { data: records, isLoading } = useDailyRecordsQuery(selectedDate, { initialData: initialDailyRecords });
-
-    if (isLoading && !records) {
-        return (
-            <DeferredRender delayMs={150}>
-                <RecordListSkeleton />
-            </DeferredRender>
-        );
-    }
     const listRef = useRef<HTMLDivElement>(null);
     const [listOffset, setListOffset] = useState(0);
 
@@ -69,6 +61,7 @@ const RecordListContent = ({ selectedDate, onRecordClick, scrollContainerRef, in
         }
     }, [records]);
 
+    // eslint-disable-next-line react-hooks/incompatible-library -- TanStack Virtual API
     const virtualizer = useVirtualizer({
         count: records?.length || 0,
         getScrollElement: () => scrollContainerRef.current,
@@ -76,6 +69,14 @@ const RecordListContent = ({ selectedDate, onRecordClick, scrollContainerRef, in
         scrollMargin: listOffset,
         overscan: 3,
     });
+
+    if (isLoading && !records) {
+        return (
+            <DeferredRender delayMs={150}>
+                <RecordListSkeleton />
+            </DeferredRender>
+        );
+    }
 
     if (!records || records.length === 0) {
         return (
